@@ -1,0 +1,2 @@
+token = "telegram_bot_token"
+log_level = "debug"
