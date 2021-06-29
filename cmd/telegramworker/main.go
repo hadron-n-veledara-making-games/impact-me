@@ -21,7 +21,20 @@ func main() {
 	flag.Parse()
 
 	bot := telegrambot.New(telegrambot.ReadConfig(configPath))
-	if err := bot.Listen(); err != nil {
+	defer bot.Broker.Close()
+
+	msgs, err := bot.Broker.Recieve()
+	if err != nil {
 		log.Fatal(err.Error())
 	}
+
+	forever := make(chan bool)
+
+	go func() {
+		for m := range msgs {
+			log.Printf("Received a message >> %s", m.Body)
+		}
+	}()
+	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
+	<-forever
 }
