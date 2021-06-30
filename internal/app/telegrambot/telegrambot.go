@@ -43,8 +43,6 @@ func (b *TelegramBot) Listen() error {
 
 	b.logger.Info("starting telegram bot")
 	b.logger.Info("authorized on account: @", b.API.Self.UserName)
-	b.logger.Info(b.config)
-	b.logger.Info(b.config.Broker)
 
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 30
@@ -76,9 +74,10 @@ func (b *TelegramBot) configureLogger() error {
 	}
 	b.logger.SetLevel(level)
 
-	if b.config.Debug {
-		b.logger.SetReportCaller(true)
+	b.logger.Formatter = &logrus.TextFormatter{
+		ForceColors: true,
 	}
+
 	return nil
 }
 

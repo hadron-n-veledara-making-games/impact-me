@@ -10,13 +10,13 @@ type Broker struct {
 	channel    *amqp.Channel
 	queue      *amqp.Queue
 	config     *BrokerConfig
-	logger     *logrus.Logger
+	Logger     *logrus.Logger
 }
 
 func New(config *BrokerConfig) *Broker {
 	return &Broker{
 		config: config,
-		logger: logrus.New(),
+		Logger: logrus.New(),
 	}
 }
 
@@ -50,14 +50,14 @@ func (b *Broker) Open(queueName string) error {
 	}
 	b.queue = &q
 
-	b.logger.Info("amqp connection opened ", b.config.URL)
+	b.Logger.Info("amqp connection opened ", b.config.URL)
 	return nil
 }
 
 func (b *Broker) Close() {
 	b.connection.Close()
 	b.channel.Close()
-	b.logger.Info("closed amqp connection ", b.config.URL)
+	b.Logger.Info("closed amqp connection ", b.config.URL)
 }
 
 func (b *Broker) configureLogger() error {
@@ -65,10 +65,10 @@ func (b *Broker) configureLogger() error {
 	if err != nil {
 		return err
 	}
-	b.logger.SetLevel(level)
+	b.Logger.SetLevel(level)
 
-	if b.config.Debug {
-		b.logger.SetReportCaller(true)
+	b.Logger.Formatter = &logrus.TextFormatter{
+		ForceColors: true,
 	}
 	return nil
 }
