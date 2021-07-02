@@ -1,6 +1,7 @@
 package telegrambot
 
 import (
+	"fmt"
 	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -53,7 +54,7 @@ func (b *TelegramBot) Listen() error {
 			continue
 		}
 
-		b.logger.Info("recieved message ", update.Message.Text)
+		b.logger.Info(fmt.Sprintf("User @%s sent message %#v", update.Message.From.UserName, update.Message.Text))
 
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Принято")
 		msg.ReplyToMessageID = update.Message.MessageID
