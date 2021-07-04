@@ -1,6 +1,11 @@
 package broker
 
 import (
+	"bytes"
+	"encoding/base64"
+	"encoding/gob"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 )
@@ -73,7 +78,11 @@ func (b *Broker) configureLogger() error {
 	return nil
 }
 
-func (b *Broker) Send(data []byte) error {
+func (b *Broker) Send(m tgbotapi.Message) error {
+	data, err := b.toGOB64(m)
+	if err != nil {
+		return err
+	}
 	if err := b.channel.Publish(
 		"",
 		b.queue.Name,
@@ -81,7 +90,7 @@ func (b *Broker) Send(data []byte) error {
 		false,
 		amqp.Publishing{
 			ContentType: "text/plain",
-			Body:        data,
+			Body:        []byte(data),
 		}); err != nil {
 		return err
 	}
@@ -102,4 +111,32 @@ func (b *Broker) Recieve() (<-chan amqp.Delivery, error) {
 		return nil, err
 	}
 	return msgs, nil
+}
+
+func (b *Broker) toGOB64(m tgbotapi.Message) (string, error) {
+	buffer := bytes.Buffer{}
+	e := gob.NewEncoder(&buffer)
+	if err := e.Encode(m); err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(buffer.Bytes()), nil
+}
+
+func (b *Broker) FromGOB64(str string) (*tgbotapi.Message, error) {
+	m := tgbotapi.Message{}
+	by, err := base64.StdEncoding.DecodeString(str)
+	if err != nil {
+		return nil, err
+	}
+
+	buffer := bytes.Buffer{}
+	buffer.Write(by)
+
+	d := gob.NewDecoder(&buffer)
+	if err := d.Decode(&m); err != nil {
+		return nil, err
+	}
+
+	return &m, nil
 }

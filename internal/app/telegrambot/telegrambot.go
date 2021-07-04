@@ -6,6 +6,7 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/hadron-n-veledara-making-games/impact-me/internal/app/broker"
+	"github.com/hadron-n-veledara-making-games/impact-me/internal/app/store"
 	"github.com/sirupsen/logrus"
 )
 
@@ -14,6 +15,7 @@ type TelegramBot struct {
 	logger *logrus.Logger
 	Broker *broker.Broker
 	API    *tgbotapi.BotAPI
+	Store  *store.Store
 }
 
 func New(config *BotConfig) *TelegramBot {
@@ -25,12 +27,17 @@ func New(config *BotConfig) *TelegramBot {
 	if err := _broker.Open(_api.Self.UserName); err != nil {
 		log.Fatal(err.Error())
 	}
+	_store := store.New(config.Store)
+	if err := _store.Open(); err != nil {
+		log.Fatal(err.Error())
+	}
 
 	return &TelegramBot{
 		config: config,
 		logger: logrus.New(),
 		API:    _api,
 		Broker: _broker,
+		Store:  _store,
 	}
 }
 
@@ -61,7 +68,7 @@ func (b *TelegramBot) Listen() error {
 		if _, err := b.API.Send(msg); err != nil {
 			b.logger.Fatal(err.Error())
 		}
-		if err := b.Broker.Send([]byte(update.Message.Text)); err != nil {
+		if err := b.Broker.Send(*update.Message); err != nil {
 			b.logger.Fatal(err.Error())
 		}
 	}
