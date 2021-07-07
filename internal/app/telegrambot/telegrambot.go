@@ -63,11 +63,6 @@ func (b *TelegramBot) Listen() error {
 
 		b.logger.Info(fmt.Sprintf("User @%s sent message %#v", update.Message.From.UserName, update.Message.Text))
 
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Принято")
-		msg.ReplyToMessageID = update.Message.MessageID
-		if _, err := b.API.Send(msg); err != nil {
-			b.logger.Fatal(err.Error())
-		}
 		if err := b.Broker.Send(*update.Message); err != nil {
 			b.logger.Fatal(err.Error())
 		}
@@ -91,4 +86,19 @@ func (b *TelegramBot) configureLogger() error {
 
 func (b *TelegramBot) configureBotAPI() {
 	b.API.Debug = b.config.Debug
+}
+
+func (b *TelegramBot) CheckCommand(c string) bool {
+	commands, err := b.API.GetMyCommands()
+	if err != nil {
+		b.logger.Error(err.Error())
+	}
+
+	for _, i := range commands {
+		if c == i.Command || c == "start" {
+			return true
+		}
+	}
+
+	return false
 }
